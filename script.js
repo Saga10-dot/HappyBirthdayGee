@@ -5,24 +5,32 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let fireworks = [];
-let texts = []; // Array untuk menyimpan teks setelah ledakan
+let texts = [];
+let flowers = [];
 
-function Firework(x, y) {
+function Firework(x, y, type) {
     this.x = x;
     this.y = y;
     this.radius = 3;
     this.alpha = 1;
     this.exploded = false;
     this.particles = [];
-    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`; // Warna acak untuk roket
+    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+    this.explosionHeight = Math.random() * (canvas.height * 0.5) + canvas.height * 0.3;
+    this.type = type;
 
     this.update = function() {
         if (!this.exploded) {
             this.y -= 3;
-            if (this.y < canvas.height * 0.5) {
+            if (this.y < this.explosionHeight) {
                 this.exploded = true;
                 for (let i = 0; i < 30; i++) {
                     this.particles.push(new Particle(this.x, this.y));
+                }
+                if (this.type === "text") {
+                    tampilkanTeks(this.x, this.y);
+                } else if (this.type === "flower") {
+                    tampilkanBunga(this.x, this.y);
                 }
             }
         }
@@ -33,7 +41,7 @@ function Firework(x, y) {
         if (!this.exploded) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color; // Gunakan warna acak
+            ctx.fillStyle = this.color;
             ctx.fill();
         } else {
             this.particles.forEach(p => p.update());
@@ -49,7 +57,7 @@ function Particle(x, y) {
     this.vx = Math.cos(this.angle) * this.speed;
     this.vy = Math.sin(this.angle) * this.speed;
     this.alpha = 1;
-    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`; // Warna acak untuk partikel
+    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
 
     this.update = function() {
         this.x += this.vx;
@@ -75,22 +83,44 @@ function render() {
         fw.update();
         if (fw.exploded && fw.particles.every(p => p.alpha <= 0)) {
             fireworks.splice(index, 1);
-            tampilkanTeks(fw.x, fw.y);
         }
     });
     
-    // Render teks dan buat memudar perlahan
     texts.forEach((text, index) => {
         ctx.globalAlpha = text.alpha;
         ctx.font = "40px Arial";
-        ctx.fillStyle = text.color;
+        ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 80%)`;
         ctx.textAlign = "center";
         ctx.fillText("Happy Birthday Gee <3", text.x, text.y);
         ctx.globalAlpha = 1;
         
-        text.alpha -= 0.01; // Memudarkan teks perlahan
+        text.alpha -= 0.01;
         if (text.alpha <= 0) {
             texts.splice(index, 1);
+        }
+    });
+    
+    flowers.forEach((flower, index) => {
+        ctx.globalAlpha = flower.alpha;
+        for (let i = 0; i < 6; i++) {
+            let angle = i * (Math.PI / 3);
+            let petalX = flower.x + Math.cos(angle) * 50;
+            let petalY = flower.y + Math.sin(angle) * 50;
+
+            ctx.beginPath();
+            ctx.arc(petalX, petalY, 15, 0, Math.PI * 2);
+            ctx.fillStyle = "pink";
+            ctx.fill();
+        }
+        
+        ctx.beginPath();
+        ctx.arc(flower.x, flower.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "yellow";
+        ctx.fill();
+        
+        flower.alpha -= 0.01;
+        if (flower.alpha <= 0) {
+            flowers.splice(index, 1);
         }
     });
     
@@ -98,12 +128,16 @@ function render() {
 }
 
 function tampilkanTeks(x, y) {
-    let color = `hsl(${Math.random() * 360}, 100%, 50%)`; // Warna acak untuk teks
-    texts.push({ x, y, color, alpha: 1 }); // Tambahkan teks dengan efek fade
+    texts.push({ x, y, alpha: 1 });
+}
+
+function tampilkanBunga(x, y) {
+    flowers.push({ x, y, alpha: 1 });
 }
 
 function mulaiKembangApi() {
-    fireworks.push(new Firework(Math.random() * canvas.width, canvas.height));
+    fireworks.push(new Firework(Math.random() * canvas.width, canvas.height, "text"));
+    fireworks.push(new Firework(Math.random() * canvas.width, canvas.height, "flower"));
 }
 
 render();
