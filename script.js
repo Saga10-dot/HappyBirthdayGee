@@ -7,6 +7,7 @@ canvas.height = window.innerHeight;
 let fireworks = [];
 let texts = [];
 let flowers = [];
+let confetti = [];
 
 function Firework(x, y, type) {
     this.x = x;
@@ -32,6 +33,7 @@ function Firework(x, y, type) {
                 } else if (this.type === "flower") {
                     tampilkanBunga(this.x, this.y);
                 }
+                tambahkanKonfeti(this.x, this.y);
             }
         }
         this.draw();
@@ -102,25 +104,39 @@ function render() {
     
     flowers.forEach((flower, index) => {
         ctx.globalAlpha = flower.alpha;
-        for (let i = 0; i < 6; i++) {
-            let angle = i * (Math.PI / 3);
+        for (let i = 0; i < 10; i++) {
+            let angle = i * (Math.PI / 5);
             let petalX = flower.x + Math.cos(angle) * 50;
             let petalY = flower.y + Math.sin(angle) * 50;
 
             ctx.beginPath();
-            ctx.arc(petalX, petalY, 15, 0, Math.PI * 2);
-            ctx.fillStyle = "pink";
+            ctx.arc(petalX, petalY, 20, 0, Math.PI * 2);
+            ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 70%)`;
             ctx.fill();
         }
         
         ctx.beginPath();
-        ctx.arc(flower.x, flower.y, 10, 0, Math.PI * 2);
+        ctx.arc(flower.x, flower.y, 15, 0, Math.PI * 2);
         ctx.fillStyle = "yellow";
         ctx.fill();
         
         flower.alpha -= 0.01;
         if (flower.alpha <= 0) {
             flowers.splice(index, 1);
+        }
+    });
+    
+    confetti.forEach((c, index) => {
+        ctx.globalAlpha = c.alpha;
+        ctx.fillStyle = c.color;
+        ctx.fillRect(c.x, c.y, 5, 5);
+        ctx.globalAlpha = 1;
+        
+        c.y += c.speed;
+        c.alpha -= 0.01;
+        
+        if (c.alpha <= 0) {
+            confetti.splice(index, 1);
         }
     });
     
@@ -133,6 +149,18 @@ function tampilkanTeks(x, y) {
 
 function tampilkanBunga(x, y) {
     flowers.push({ x, y, alpha: 1 });
+}
+
+function tambahkanKonfeti(x, y) {
+    for (let i = 0; i < 50; i++) {
+        confetti.push({
+            x: x + (Math.random() - 0.5) * 100,
+            y: y + (Math.random() - 0.5) * 100,
+            speed: Math.random() * 2 + 1,
+            alpha: 1,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        });
+    }
 }
 
 function mulaiKembangApi() {
