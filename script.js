@@ -1,94 +1,114 @@
-:root {
-    --sky-blue: #87CEEB;
-    --deep-blue: #4682B4;
-    --light-grey: #F5F5F5;
-    --white: #FFFFFF;
+const canvas = document.getElementById("fireworksCanvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+let step = 0;
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+// Fungsi ini harus ada di scope global agar bisa dipanggil onclick
+window.handleSurprise = function() {
+    step++;
+    const btn = document.getElementById("actionBtn");
+
+    if (step === 1) {
+        btn.innerText = "WOW, LAGI!";
+        createGardenEffect();
+    } else if (step === 2) {
+        btn.innerText = "LIHAT KEJUTAN TERAKHIR!";
+        for(let i=0; i<5; i++) {
+            setTimeout(() => launchFirework("flower"), i * 500);
+        }
+    } else if (step === 3) {
+        btn.style.display = "none";
+        document.getElementById("card").classList.remove("hidden");
+        launchFirework("text");
+        // Kembang api otomatis setelah kartu muncul
+        setInterval(() => launchFirework("random"), 1500);
+    }
+};
+
+class Particle {
+    constructor(x, y, color, speed, angle) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.speed = speed;
+        this.angle = angle;
+        this.vx = Math.cos(this.angle) * this.speed;
+        this.vy = Math.sin(this.angle) * this.speed;
+        this.alpha = 1;
+        this.gravity = 0.05;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    update() {
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= 0.01;
+    }
 }
 
-body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--sky-blue);
-    font-family: 'Montserrat', sans-serif;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+function launchFirework(type) {
+    const x = Math.random() * canvas.width;
+    const y = canvas.height;
+    const targetY = Math.random() * (canvas.height * 0.5);
+    explode(x, targetY, type);
 }
 
-.main-container {
-    position: relative;
-    z-index: 2;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(70, 130, 180, 0.3);
-    text-align: center;
-    max-width: 85%;
-    width: 400px;
-    border: 1px solid var(--light-grey);
+function explode(x, y, type) {
+    const colors = ['#FFFFFF', '#4682B4', '#B0E0E6', '#FFD700'];
+    
+    if (type === "text") {
+        // Teks kembang api sederhana (visual flash)
+        particles.push(new Particle(x, y, '#4682B4', 0, 0));
+    }
+
+    for (let i = 0; i < 50; i++) {
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        particles.push(new Particle(x, y, color, Math.random() * 4, Math.random() * Math.PI * 2));
+    }
 }
 
-.title {
-    font-family: 'Dancing Script', cursive;
-    color: var(--deep-blue);
-    font-size: 2.5em;
-    margin-bottom: 5px;
+function createGardenEffect() {
+    // Efek bunga bermunculan dari bawah
+    const flowerColors = ['#FF69B4', '#FFFFFF', '#ADD8E6', '#FFD700'];
+    for (let i = 0; i < 40; i++) {
+        setTimeout(() => {
+            const x = Math.random() * canvas.width;
+            particles.push(new Particle(x, canvas.height, flowerColors[i%4], Math.random() * 5 + 2, -Math.PI/2));
+        }, i * 50);
+    }
 }
 
-.name {
-    font-size: 1.2em;
-    color: #555;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
+function animate() {
+    // Memberikan efek trail transparan
+    ctx.fillStyle = 'rgba(135, 206, 235, 0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach((p, index) => {
+        p.update();
+        p.draw();
+        if (p.alpha <= 0) particles.splice(index, 1);
+    });
+
+    requestAnimationFrame(animate);
 }
 
-button {
-    background-color: var(--deep-blue);
-    color: var(--white);
-    border: none;
-    padding: 15px 25px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 50px;
-    transition: transform 0.3s, background-color 0.3s;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-button:hover {
-    background-color: #36648B;
-    transform: scale(1.05);
-}
-
-.card {
-    margin-top: 25px;
-    padding: 20px;
-    background: var(--light-grey);
-    border-left: 5px solid var(--deep-blue);
-    border-radius: 10px;
-    animation: fadeIn 2s ease-in-out;
-}
-
-.card-text {
-    font-family: 'Dancing Script', cursive;
-    font-size: 1.2em;
-    line-height: 1.6;
-    color: #333;
-}
-
-.hidden { display: none; }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    pointer-events: none;
-}
+animate();
